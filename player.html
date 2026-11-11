@@ -334,12 +334,23 @@ function __nodeAt(ft, p){
 function __autoPath(w){
   var ft = w.ft;
   if(!ft || !ft.length) return null;
-  for(var i=0;i<ft.length;i++){
-    if(/se\s*(?:あり|有り|有|on)/i.test(ft[i].t) && !/なし|無し|無/i.test(ft[i].t)) return ft[i].p;
+  var found = null;
+  (function walk(list){
+    for(var i=0;i<list.length && !found;i++){
+      var n = list[i];
+      if(/se\s*(?:あり|有り|有|on)/i.test(n.t) && !/なし|無し|無/i.test(n.t)){ found = n.p; return; }
+      if(n.c && n.c.length) walk(n.c);
+    }
+  })(ft);
+  if(found !== null) return found;
+  /* 没有 SEあり 目录：只要唯一顶层目录覆盖全部轨，就一路下钻到有曲目的那层 */
+  var list = ft, p = null;
+  while(list && list.length === 1 && (list[0].n||0) === w.tracks.length){
+    p = list[0].p;
+    if(!list[0].c || !list[0].c.length) break;
+    list = list[0].c;
   }
-  var tot = 0; for(var q=0;q<ft.length;q++) tot += (ft[q].n||0);
-  if(ft.length === 1 && tot === w.tracks.length) return ft[0].p;
-  return null;
+  return p;
 }
 function renderWork(rj, skipHist, path){
   var w = works.find(function(x){return x.rj===rj;});
