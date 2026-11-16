@@ -207,8 +207,52 @@ header .hbtn svg{width:18px;height:18px;fill:var(--pri)}
 #addSheet .as-x{position:absolute;right:12px;top:10px;color:var(--sub);font-size:22px;width:34px;height:34px;
   display:flex;align-items:center;justify-content:center}
 </style>
+<script>
+(function(){
+  window.__bootOK = false;
+  function show(msg){
+    var f = document.getElementById('bootFail'); if (!f) return;
+    var v = document.getElementById('view');
+    if (v && v.children.length) return;                 /* 已经渲染出内容就不打扰 */
+    if (window.__bootOK) return;
+    f.style.display = 'block';
+    var m = document.getElementById('bootMsg');
+    if (m) m.textContent = String(msg || '').slice(0, 300);
+  }
+  window.__bootShow = show;
+  window.addEventListener('error', function(e){
+    try{ show((e.message || '脚本错误') + '  ' + String(e.filename || '').split('/').pop() + ':' + (e.lineno || '')); }catch(x){}
+  }, true);
+  window.addEventListener('DOMContentLoaded', function(){
+    var r = document.getElementById('bootReload');
+    if (r) r.onclick = function(){ location.reload(); };
+    var c = document.getElementById('bootClear');
+    if (c) c.onclick = function(){
+      try{ localStorage.removeItem('asmr_lists_v1'); }catch(e){}
+      try{ if (window.caches) caches.keys().then(function(k){ k.forEach(function(x){ caches.delete(x); }); }); }catch(e){}
+      location.href = location.pathname + '?r=' + Date.now();
+    };
+    /* 4 秒还没内容 = 卡住了，也给个提示 */
+    setTimeout(function(){
+      var v = document.getElementById('view');
+      if (v && !v.children.length && !window.__bootOK) show('数据加载超时（可能是网络或缓存问题）');
+    }, 4000);
+  });
+})();
+</script>
 </head>
 <body>
+
+<!-- 启动失败兜底：白屏时把原因显示出来 -->
+<div id="bootFail" style="display:none;padding:22px 18px;font-size:14px;line-height:1.7">
+  <div style="font-weight:700;font-size:16px;margin-bottom:8px">页面没加载出来</div>
+  <div id="bootMsg" style="color:#c62828;font-size:12.5px;word-break:break-all;margin-bottom:14px"></div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap">
+    <button id="bootReload" style="padding:10px 18px;border-radius:10px;background:#027be3;color:#fff;border:0;font-size:14px;font-weight:600">重新加载</button>
+    <button id="bootClear" style="padding:10px 18px;border-radius:10px;background:#e6f2fd;color:#027be3;border:0;font-size:14px;font-weight:600">清缓存后重载</button>
+  </div>
+  <div style="color:#6b7280;font-size:12px;margin-top:12px">清缓存会同时重置本机的列表数据（服务器上的列表不受影响）。</div>
+</div>
 
 <header>
   <h1 id="ttl">我的音声库</h1>
