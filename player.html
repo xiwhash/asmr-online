@@ -830,6 +830,33 @@ au.addEventListener('timeupdate', function(){
 au.addEventListener('ended', function(){
   if(cur.w){ var __nx = stepIdx(1); if(__nx !== cur.i) playTrack(cur.w.rj, __nx); }
 });
+/* 缓冲提示：网速慢时给个明示 */
+var __bufEl = null, __bufT = null;
+function bufShow(){
+  if(__bufT) return;
+  __bufT = setTimeout(function(){
+    if(!__bufEl){
+      __bufEl = document.createElement('div');
+      __bufEl.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:92px;z-index:100001;' +
+        'background:rgba(16,20,26,.85);color:#fff;padding:8px 16px;border-radius:999px;font-size:13px;' +
+        'pointer-events:none;box-shadow:0 6px 20px rgba(0,0,0,.3);transition:opacity .2s';
+      __bufEl.textContent = '缓冲中…';
+      document.body.appendChild(__bufEl);
+    }
+    __bufEl.style.display = 'block';
+  }, 600);
+}
+function bufHide(){
+  if(__bufT){ clearTimeout(__bufT); __bufT = null; }
+  if(__bufEl) __bufEl.style.display = 'none';
+}
+au.addEventListener('loadstart', bufShow);
+au.addEventListener('waiting', bufShow);
+au.addEventListener('playing', bufHide);
+au.addEventListener('canplay', bufHide);
+au.addEventListener('seeked', bufHide);
+au.addEventListener('pause', bufHide);
+
 au.addEventListener('error', function(){
   document.getElementById('miniS').textContent = '加载失败：' + (au.currentSrc||'').split('/').pop();
 });
@@ -1534,7 +1561,6 @@ setInterval(function(){
         try{ au.currentTime = s.target; }catch(e2){}
         curLine = -1;
         syncLyric(true);
-        if(au.paused){ var p = au.play(); if(p && p.catch) p.catch(function(){}); }
       }
     }
     el.addEventListener('pointerup', end);
