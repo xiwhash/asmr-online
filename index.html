@@ -1656,8 +1656,13 @@ function __lLoad(){
   try{ loc = JSON.parse(localStorage.getItem(LK)||'null'); }catch(e){}
   if(!loc || !loc.length){ LISTS = base; __lSave(); return; }
   var out = loc.map(__lClone);
+  var __nm = function(s){ return String(s || '').trim().toLowerCase(); };
   base.forEach(function(b){
     var mine = out.filter(function(l){ return l.id === b.id; })[0];
+    if(!mine){                                   /* 名字相同 = 同一个列表（用户自己建过的） */
+      var bn = __nm(b.name);
+      mine = out.filter(function(l){ return __nm(l.name) === bn; })[0] || null;
+    }
     if(!mine){ out.push(__lClone(b)); return; }
     mine.imported = mine.imported || [];
     mine.removed = mine.removed || [];
