@@ -1543,7 +1543,7 @@ setInterval(function(){
       }
       if(sw.mode !== 'seek') return;
       try{ e.preventDefault(); }catch(x){}
-      var per = Math.max(0.2, Math.min(1.2, sw.dur / 1200));   /* 长曲更稳，短曲更灵敏 */
+      var per = Math.max(0.25, Math.min(2.0, sw.dur / 700));   /* 划满一屏≈曲长的 1/1.75 */
       var nt = sw.base + sw.dx * per;
       if(nt < 0) nt = 0;
       if(nt > sw.dur - 0.05) nt = sw.dur - 0.05;
