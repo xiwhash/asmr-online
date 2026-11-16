@@ -267,16 +267,33 @@ var cur = { w:null, i:0, subs:[], rows:[] };
 var query = '';
 
 /* ==================== 起播加速：音频预取到 Blob，点开几乎瞬发 ==================== */
-var __pf = { cache:{}, pending:{}, order:[], max:4 };
+var __pf = { cache:{}, pending:{}, order:[], max:2, cap:24 * 1024 * 1024 };
+function __pfBlocked(){
+  try{
+    var c = navigator.connection || navigator.mozConnection || {};
+    if(c.saveData) return true;                                   /* 省流量模式：不预取 */
+    if(/^(slow-2g|2g)$/.test(String(c.effectiveType || ''))) return true;
+  }catch(e){}
+  return false;
+}
 function __pfUrl(u){ return (u && __pf.cache[u]) || null; }
 function __pfKick(u){
   if(!u || __pf.cache[u] || __pf.pending[u]) return;
+  if(__pfBlocked()) return;
   __pf.pending[u] = 1;
   var ac = null;
   try{ if(window.AbortController) ac = new AbortController(); }catch(e){ ac = null; }
   var to = setTimeout(function(){ try{ ac && ac.abort(); }catch(e){} }, 40000);
   fetch(u, { cache:'force-cache', signal: ac ? ac.signal : undefined })
-    .then(function(r){ if(!r || !r.ok) throw new Error('http ' + (r && r.status)); return r.blob(); })
+    .then(function(r){
+      if(!r || !r.ok) throw new Error('http ' + (r && r.status));
+      var cl = parseInt(r.headers.get('content-length') || '0', 10);
+      if(cl > __pf.cap){                     /* 超大单轨不塞内存，交给浏览器串流 */
+        try{ if(r.body && r.body.cancel) r.body.cancel(); }catch(e){}
+        throw new Error('too big ' + cl);
+      }
+      return r.blob();
+    })
     .then(function(b){
       if(!b || b.size < 1024) throw new Error('empty');
       var o = URL.createObjectURL(b);
